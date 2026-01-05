@@ -5,6 +5,8 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Configuration;
+using System.Data.SqlClient;
 
 namespace InvoiceCheck
 {
@@ -63,6 +65,53 @@ namespace InvoiceCheck
             }
 
             return dt;
+        }
+
+        /// <summary>
+        /// 將發票資料寫入 TempInv 資料表
+        /// </summary>
+        public static void SaveInvoicesToTempInv(DataTable invoiceData)
+        {
+            if (invoiceData == null || invoiceData.Rows.Count == 0) return;
+
+            string connString = ConfigurationManager.ConnectionStrings["ConnString_TR_DATA"]?.ConnectionString;
+            if (string.IsNullOrWhiteSpace(connString))
+            {
+                throw new InvalidOperationException("Connection string 'ConnString_TR_DATA' not found.");
+            }
+
+            using (SqlConnection conn = new SqlConnection(connString))
+            {
+                conn.Open();
+                using (SqlTransaction tran = conn.BeginTransaction())
+                using (SqlCommand cmd = new SqlCommand(@"INSERT INTO TempInv (ShopNo, EcrHdKey, InvoiceNumber, CreateDate)
+                                                         VALUES (@ShopNo, @EcrHdKey, @InvoiceNumber, @CreateDate)", conn, tran))
+                {
+                    cmd.Parameters.Add("@ShopNo", SqlDbType.NVarChar, 50);
+                    cmd.Parameters.Add("@EcrHdKey", SqlDbType.NVarChar, 100);
+                    cmd.Parameters.Add("@InvoiceNumber", SqlDbType.NVarChar, 50);
+                    cmd.Parameters.Add("@CreateDate", SqlDbType.NVarChar, 50);
+
+                    try
+                    {
+                        foreach (DataRow row in invoiceData.Rows)
+                        {
+                            cmd.Parameters["@ShopNo"].Value = row["ShopNo"] ?? DBNull.Value;
+                            cmd.Parameters["@EcrHdKey"].Value = row["EcrHdKey"] ?? DBNull.Value;
+                            cmd.Parameters["@InvoiceNumber"].Value = row["InvoiceNumber"] ?? DBNull.Value;
+                            cmd.Parameters["@CreateDate"].Value = DateTime.Now.ToString("yyyy/MM/dd");
+                            cmd.ExecuteNonQuery();
+                        }
+
+                        tran.Commit();
+                    }
+                    catch
+                    {
+                        tran.Rollback();
+                        throw;
+                    }
+                }
+            }
         }
 
     }

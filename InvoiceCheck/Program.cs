@@ -12,9 +12,21 @@ namespace InvoiceCheck
     {
         static void Main(string[] args)
         {
-            CommonTool commonTool = new CommonTool();
-            string filePath = "D:\\TEMP\\IG_3.0_60499576_PUB_20260103_005_ACK.txt"; // 替換為實際檔案路徑
-            DataTable invoiceData = CommonTool.GetTradevanInvoiceDataTable(filePath);
+            DateTime dateTime = DateTime.Now.AddDays(-2);
+
+            DirectoryInfo dirInfo = new DirectoryInfo($"D:\\TIF_eInvoice\\tmp\\deq\\{dateTime.ToString("yyyyMMdd")}");
+            if (!dirInfo.Exists) return;
+
+            DirectoryInfo[] hourfileInfos = dirInfo.GetDirectories();
+
+            foreach (var dir in hourfileInfos)
+            {
+                FileInfo fileInfo = dir.GetFiles("*_ACK.txt").FirstOrDefault();
+                if (fileInfo == null || !fileInfo.Exists) continue;
+
+                DataTable invoiceData = CommonTool.GetTradevanInvoiceDataTable(fileInfo.FullName);
+                CommonTool.SaveInvoicesToTempInv(invoiceData);
+            }
         }
     }
 }
