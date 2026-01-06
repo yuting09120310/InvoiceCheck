@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Configuration;
 using System.Data;
 using System.Diagnostics;
 using System.IO;
@@ -10,7 +11,7 @@ namespace InvoiceCheck
     {
         static void Main(string[] args)
         {
-            string path = "D:\\TIF_eInvoice\\tmp\\";
+            string path = ConfigurationManager.ConnectionStrings["TIF_Path"]?.ConnectionString;
 
             Stopwatch sw = Stopwatch.StartNew();
             int totalMissing = 0;
