@@ -18,9 +18,7 @@ namespace InvoiceCheck
             StringBuilder logBuilder = new StringBuilder();
             logBuilder.AppendLine($"Start: {DateTime.Now:yyyy-MM-dd HH:mm:ss}");
 
-            CommonTool.TruncateTempInv();
-
-            for (int i = 1; i <= 4; i++)
+            for (int i = 1; i <= 6; i++)
             {
                 DateTime dateTime = DateTime.Now.AddDays(-i);
 
@@ -45,10 +43,14 @@ namespace InvoiceCheck
                     }
                 }
 
-                // 將 ACK 資料寫入 TempInv，供後續 DB 比對
-                CommonTool.SaveInvoicesToTempInv(ackInvoices);
+                // 將 ACK 資料寫入 [TradeVanInvoice]，供後續 DB 比對（先刪除該日舊資料避免累積）
+                if (ackInvoices.Rows.Count > 0)
+                {
+                    //CommonTool.DeleteTradeVanInvoiceByDate(dateTime);
+                    CommonTool.SaveInvoicesToTradeVanInvoice(ackInvoices);
+                }
 
-                // TempInv 尋找的缺漏比對
+                // [TradeVanInvoice] 尋找的缺漏比對
                 DataTable missingInvoices = CommonTool.GetMissingInvoices(dateTime);
                 logBuilder.AppendLine($"Date {dateTime:yyyyMMdd}: missing {missingInvoices.Rows.Count}");
                 totalMissing += missingInvoices.Rows.Count;
