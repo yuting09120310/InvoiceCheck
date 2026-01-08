@@ -4,6 +4,7 @@ using System.Data;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
+using System.Threading;
 
 namespace InvoiceCheck
 {
@@ -105,6 +106,9 @@ namespace InvoiceCheck
                 content = Environment.NewLine + content;
             }
             File.AppendAllText(logPath, content);
+
+            Console.WriteLine("執行完成...");
+            Thread.Sleep(TimeSpan.FromMinutes(1));
         }
     }
 }
